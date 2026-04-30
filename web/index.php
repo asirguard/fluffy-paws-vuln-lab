@@ -1,5 +1,10 @@
 <?php
-$uploadMode = isset($_GET['upload']);
+require_once 'auth.php';
+
+// Upload mode only available to logged-in users with role 'user'
+$canUpload = $isLoggedIn && $currentRole === 'user';
+
+$uploadMode = isset($_GET['upload']) && $canUpload;
 $message = "";
 $uploadedPath = "";
 
@@ -36,8 +41,13 @@ if(isset($_POST['upload'])) {
         </div>
 
         <div class="header__actions">
-            <a href="#" class="btn">LogIn</a>
-            <a href="#" class="btn">SignUp</a>
+            <?php if ($isLoggedIn): ?>
+                <span class="btn" style="cursor:default; opacity:0.85;"><?php echo htmlspecialchars($currentUsername); ?></span>
+                <a href="dashboard.php" class="btn">Dashboard</a>
+            <?php else: ?>
+                <a href="login.php" class="btn">Log In</a>
+                <a href="register.php" class="btn">Sign Up</a>
+            <?php endif; ?>
         </div>
     </div>
 </header>
@@ -52,7 +62,13 @@ if(isset($_POST['upload'])) {
             <?php if(!$uploadMode): ?>
 
                 <h1>Upload & Share Your Cats Photos</h1>
-                <a href="?upload=1" class="btn-hero">Upload Your Cat Pics</a>
+                <?php if ($canUpload): ?>
+                    <a href="?upload=1" class="btn-hero">Upload Your Cat Pics</a>
+                <?php elseif ($isLoggedIn && $currentRole === 'admin'): ?>
+                    <!-- Admin sees the page but not the upload button -->
+                <?php else: ?>
+                    <a href="login.php" class="btn-hero">Log In to Upload</a>
+                <?php endif; ?>
 
             <?php else: ?>
 
