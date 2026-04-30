@@ -1,0 +1,82 @@
+# ===========================
+# Claude AI context — private, never commit
+# ===========================
+CLAUDE_CONTEXT.md
+
+# ===========================
+# Node.js (API)
+# ===========================
+api/node_modules/
+api/npm-debug.log*
+api/yarn-debug.log*
+api/yarn-error.log*
+api/pnpm-debug.log*
+
+# ===========================
+# Environment & Secrets
+# ===========================
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+
+# ===========================
+# MongoDB
+# ===========================
+data/db/
+data/
+*.bson
+dump/
+mongodump/
+
+# ===========================
+# PHP uploads (runtime — not source)
+# ===========================
+web/app/uploads/*
+!web/app/uploads/.gitkeep
+
+# ===========================
+# Logs
+# ===========================
+logs/
+*.log
+*.log.*
+
+# ===========================
+# OS & Editor
+# ===========================
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===========================
+# Build output
+# ===========================
+dist/
+build/
+out/
+
+# ===========================
+# Testing & Coverage
+# ===========================
+coverage/
+.nyc_output/
+*.lcov
+
+# ===========================
+# Temp
+# ===========================
+tmp/
+temp/
+*.tmp

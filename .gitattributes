@@ -1,2 +1,62 @@
-*.png filter=lfs diff=lfs merge=lfs -text
-*.jpg filter=lfs diff=lfs merge=lfs -text
+# Auto-detect text files and perform LF normalization
+* text=auto
+
+# ===========================
+# Explicit text files — always LF
+# ===========================
+*.js        text eol=lf
+*.ts        text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.env*      text eol=lf
+*.sh        text eol=lf
+*.php       text eol=lf
+*.css       text eol=lf
+*.html      text eol=lf
+
+# ===========================
+# Images — tracked via Git LFS
+# ===========================
+*.png       filter=lfs diff=lfs merge=lfs -text
+*.jpg       filter=lfs diff=lfs merge=lfs -text
+*.jpeg      filter=lfs diff=lfs merge=lfs -text
+*.gif       filter=lfs diff=lfs merge=lfs -text
+*.webp      filter=lfs diff=lfs merge=lfs -text
+*.ico       filter=lfs diff=lfs merge=lfs -text
+*.psd       filter=lfs diff=lfs merge=lfs -text
+*.ai        filter=lfs diff=lfs merge=lfs -text
+
+# ===========================
+# Video / Audio — LFS
+# ===========================
+*.mp4       filter=lfs diff=lfs merge=lfs -text
+*.mov       filter=lfs diff=lfs merge=lfs -text
+*.mp3       filter=lfs diff=lfs merge=lfs -text
+
+# ===========================
+# Archives & binaries — LFS
+# ===========================
+*.zip       filter=lfs diff=lfs merge=lfs -text
+*.gz        filter=lfs diff=lfs merge=lfs -text
+*.tar       filter=lfs diff=lfs merge=lfs -text
+
+# ===========================
+# Fonts — binary, no LFS needed (small)
+# ===========================
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+
+# ===========================
+# MongoDB dumps — LFS
+# ===========================
+*.bson      filter=lfs diff=lfs merge=lfs -text
+dump/**     filter=lfs diff=lfs merge=lfs -text
+
+# ===========================
+# Shell scripts — always executable on Unix
+# ===========================
+setup.sh    text eol=lf
