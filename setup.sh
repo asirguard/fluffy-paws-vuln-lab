@@ -5,6 +5,12 @@
 # =============================================================================
 # This script sets up a full pentesting lab environment on Ubuntu Server.
 # Installs: Apache + PHP (Web Lab), Node.js + FerretDB/SQLite (API Lab)
+#
+# Network setup:
+#   Step 1 — Run setup.sh with Adapter set to NAT (internet access for install)
+#   Step 2 — Switch Adapter to Host-Only in VirtualBox after setup completes
+#            VM gets DHCP IP from Host-Only network (192.168.56.x by default)
+#            No manual network config needed — VirtualBox handles everything
 # =============================================================================
 
 set -euo pipefail
@@ -37,11 +43,6 @@ DEV_PASS="SuperSecret123"
 ALICE_PASS="meow123"
 JOHN_PASS="whiskers99"
 NODE_MAJOR=20
-
-# ── Network (override via env: STATIC_IP, GATEWAY, NETMASK) ──────────────────
-STATIC_IP="${STATIC_IP:-192.168.56.20}"
-NETMASK="${NETMASK:-24}"
-GATEWAY="${GATEWAY:-192.168.56.1}"
 
 # =============================================================================
 # [1] WARNING
@@ -133,7 +134,7 @@ ok "Repository structure verified"
 info "Checking internet connectivity..."
 if ! curl -fsSL --max-time 10 https://deb.nodesource.com > /dev/null 2>&1 && \
    ! curl -fsSL --max-time 10 https://archive.ubuntu.com > /dev/null 2>&1; then
-    fail "No internet connectivity. Check your network connection."
+    fail "No internet connectivity. Make sure VirtualBox Adapter is set to NAT."
 fi
 ok "Internet reachable"
 
@@ -386,7 +387,7 @@ ok "sudo misconfiguration applied (intentional vuln)"
 step "Running Smoke Tests"
 
 # Web
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://$DOMAIN" 2>/dev/null || echo "000")
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:80" 2>/dev/null || echo "000")
 if [ "$HTTP_CODE" = "200" ]; then
     ok "Web Lab responding (HTTP 200)"
 else
@@ -403,39 +404,12 @@ else
 fi
 
 # =============================================================================
-# [10] STATIC IP
+# [10] SUMMARY
 # =============================================================================
-step "Configuring Static IP"
 
-NETWORK_IFACE=$(ip link show | awk -F': ' '/^[0-9]+: e/{print $2; exit}')
+# Detect current IP
+CURRENT_IP=$(ip -4 addr show scope global | awk '/inet /{print $2}' | cut -d'/' -f1 | head -1)
 
-if [ -z "$NETWORK_IFACE" ]; then
-    warn "No ethernet interface found — skipping static IP configuration"
-    STATIC_IP_STATUS="skipped (no interface detected)"
-else
-    info "Detected interface: $NETWORK_IFACE"
-    cat > /etc/netplan/00-installer-config.yaml << EOF
-network:
-  version: 2
-  ethernets:
-    ${NETWORK_IFACE}:
-      addresses:
-        - ${STATIC_IP}/${NETMASK}
-      routes:
-        - to: default
-          via: ${GATEWAY}
-      nameservers:
-        addresses: [8.8.8.8, 8.8.4.4]
-      dhcp4: false
-EOF
-    chmod 600 /etc/netplan/00-installer-config.yaml
-    netplan apply 2>/dev/null && ok "Static IP applied: $STATIC_IP/$NETMASK on $NETWORK_IFACE" || warn "netplan apply returned non-zero — verify with: ip addr show $NETWORK_IFACE"
-    STATIC_IP_STATUS="$STATIC_IP/$NETMASK on $NETWORK_IFACE"
-fi
-
-# =============================================================================
-# [11] SUMMARY
-# =============================================================================
 echo ""
 echo -e "${GREEN}${BOLD}"
 cat << 'EOF'
@@ -445,9 +419,15 @@ cat << 'EOF'
 EOF
 echo -e "${RESET}"
 
-echo -e "  ${BOLD}Access Points${RESET}"
-echo -e "  ├─ Web Lab   →  http://$DOMAIN"
-echo -e "  └─ API Lab   →  http://127.0.0.1:3000/api/ping"
+echo -e "  ${BOLD}Next step — switch VirtualBox Adapter to Host-Only${RESET}"
+echo -e "  The VM will get a DHCP IP from the Host-Only network."
+echo -e "  Use that IP to reach the lab from Windows and Kali."
+echo ""
+echo -e "  ${BOLD}Current IP (NAT)${RESET}"
+echo -e "  └─ ${CURRENT_IP:-not detected}"
+echo ""
+echo -e "  ${BOLD}After switching to Host-Only — verify IP with:${RESET}"
+echo -e "  └─ ip addr show"
 echo ""
 echo -e "  ${BOLD}API Test Users${RESET}"
 echo -e "  ├─ alice  /  meow123      (role: user)"
@@ -456,10 +436,10 @@ echo ""
 echo -e "  ${BOLD}Linux User (for privesc chain)${RESET}"
 echo -e "  └─ dev  /  SuperSecret123"
 echo ""
-echo -e "  ${BOLD}Quick Verification${RESET}"
-echo -e "  ├─ curl http://$DOMAIN"
-echo -e "  ├─ curl http://127.0.0.1:3000/api/ping"
-echo -e "  └─ curl -s -X POST http://127.0.0.1:3000/api/auth/login \\"
+echo -e "  ${BOLD}Quick Verification (after Host-Only switch)${RESET}"
+echo -e "  ├─ curl http://<VM_IP>:80"
+echo -e "  ├─ curl http://<VM_IP>:3000/api/ping"
+echo -e "  └─ curl -s -X POST http://<VM_IP>:3000/api/auth/login \\"
 echo -e "          -H 'Content-Type: application/json' \\"
 echo -e "          -d '{\"username\":\"alice\",\"password\":\"meow123\"}'"
 echo ""
@@ -468,9 +448,6 @@ echo -e "  ├─ sudo systemctl status fluffy-paws-api"
 echo -e "  ├─ sudo systemctl restart fluffy-paws-api"
 echo -e "  └─ sudo journalctl -u fluffy-paws-api -f"
 echo ""
-echo -e "  ${BOLD}Network${RESET}
-  └─ Static IP  →  ${STATIC_IP_STATUS:-not configured}
-
-  ${RED}${BOLD}⚠️  Keep this machine off the internet.${RESET}"
+echo -e "  ${RED}${BOLD}⚠️  Switch to Host-Only now. Keep this machine off the internet.${RESET}"
 echo -e "  ${RED}   This lab is intentionally exploitable.${RESET}"
 echo ""

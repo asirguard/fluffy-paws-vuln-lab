@@ -26,15 +26,16 @@ const authRoutes = require('./src/routes/auth.routes');
 
 app.use('/api', authRoutes);
 
-// ── Health check — самый простой маршрут, без файлов ─────────
+// ── Health check ──────────────────────────────────────────────
 // GET /api/ping → { status: 'ok' }
-// Используется чтобы проверить что сервер живой
 app.get('/api/ping', (req, res) => {
   res.json({ status: 'ok', service: 'Fluffy Paws API' });
 });
 
 // ── Start ─────────────────────────────────────────────────────
-app.listen(3000, '127.0.0.1', () => {
-  console.log('[SERVER] Fluffy Paws API running on http://127.0.0.1:3000');
-  console.log('[SERVER] Environment: local lab only — not exposed externally');
+// Bind to 0.0.0.0 so the API is reachable from the Windows host
+// and Kali over the VirtualBox Host-Only network
+app.listen(3000, '0.0.0.0', () => {
+  console.log('[SERVER] Fluffy Paws API running on http://0.0.0.0:3000');
+  console.log('[SERVER] Accessible from host and Kali over Host-Only network');
 });
