@@ -76,7 +76,7 @@ echo -e "${YELLOW}  Type ${BOLD}YES${RESET}${YELLOW} to confirm you understand a
 echo -n "  > "
 read -r CONFIRM
 
-if [ "$CONFIRM" != "YES" ]; then
+if [ "${CONFIRM^^}" != "YES" ]; then
     echo ""
     echo -e "  ${RED}Aborted. Setup was not run.${RESET}"
     echo ""
@@ -120,11 +120,11 @@ else
 fi
 
 # Repo structure check
-if [ ! -d "$REPO_DIR/web/app" ]; then
-    fail "web/app directory not found. Run setup.sh from the repository root."
+if [ ! -d "$REPO_DIR/web" ]; then
+    fail "web directory not found. Make sure you cloned the full repo and run: sudo bash setup.sh from inside fluffy-paws-vuln-lab/"
 fi
 if [ ! -d "$REPO_DIR/api" ]; then
-    fail "api directory not found. Run setup.sh from the repository root."
+    fail "api directory not found. Make sure you cloned the full repo and run: sudo bash setup.sh from inside fluffy-paws-vuln-lab/"
 fi
 ok "Repository structure verified"
 
