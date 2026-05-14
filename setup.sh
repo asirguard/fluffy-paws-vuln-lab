@@ -4,7 +4,7 @@
 # Fluffy Paws — Vulnerable Lab Installer
 # =============================================================================
 # This script sets up a full pentesting lab environment on Ubuntu Server.
-# Installs: Apache + PHP (Web Lab), Node.js + MongoDB (API Lab)
+# Installs: Apache + PHP (Web Lab), Node.js + FerretDB/SQLite (API Lab)
 # =============================================================================
 
 set -euo pipefail
@@ -22,6 +22,7 @@ ok()   { echo -e "  ${GREEN}[OK]${RESET}    $1"; }
 skip() { echo -e "  ${CYAN}[SKIP]${RESET}  $1"; }
 info() { echo -e "  ${YELLOW}[INFO]${RESET}  $1"; }
 fail() { echo -e "  ${RED}[FAIL]${RESET}  $1"; exit 1; }
+warn() { echo -e "  ${YELLOW}[WARN]${RESET}  $1"; }
 step() { echo -e "\n${BOLD}──────────────────────────────────────────${RESET}"; \
          echo -e "${BOLD} $1${RESET}"; \
          echo -e "${BOLD}──────────────────────────────────────────${RESET}"; }
@@ -193,24 +194,19 @@ fi
 
 # Data directory for SQLite
 mkdir -p "$FERRETDB_DATA"
-chown -R www-data:www-data "$FERRETDB_DATA"
 
 # systemd service for FerretDB
 info "Configuring FerretDB service..."
 cat > /etc/systemd/system/ferretdb.service << EOF
 [Unit]
 Description=FerretDB (MongoDB-compatible database)
-After=network.target
+After=network.target remote-fs.target
 
 [Service]
 Type=simple
-User=www-data
-Environment=FERRETDB_HANDLER=sqlite
-Environment=FERRETDB_SQLITE_DIR=${FERRETDB_DATA}/
-Environment=FERRETDB_LISTEN_ADDR=127.0.0.1:27017
-ExecStart=/usr/bin/ferretdb
+ExecStart=/usr/bin/ferretdb --handler="sqlite" --sqlite-url "file:${FERRETDB_DATA}/"
 Restart=on-failure
-RestartSec=5
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
@@ -293,15 +289,14 @@ npm install --silent > /dev/null 2>&1
 ok "npm install complete"
 
 # Seed database
-info "Seeding MongoDB with test users..."
+info "Seeding database with test users..."
 node - << 'SEED'
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 async function seed() {
-    const client = new MongoClient('mongodb://127.0.0.1:27017');
-    await client.connect();
-    const db = client.db('fluffy-paws');
+    await mongoose.connect('mongodb://127.0.0.1:27017/fluffy-paws');
+    const db = mongoose.connection.db;
     const users = db.collection('users');
 
     await users.deleteMany({});
@@ -327,7 +322,7 @@ async function seed() {
     ]);
 
     console.log('Seed complete');
-    await client.close();
+    await mongoose.disconnect();
 }
 
 seed().catch(e => { console.error(e); process.exit(1); });
