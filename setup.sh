@@ -39,9 +39,9 @@ JOHN_PASS="whiskers99"
 NODE_MAJOR=20
 
 # ── Network (override via env: STATIC_IP, GATEWAY, NETMASK) ──────────────────
-STATIC_IP="${STATIC_IP:-10.10.10.20}"
+STATIC_IP="${STATIC_IP:-192.168.56.20}"
 NETMASK="${NETMASK:-24}"
-GATEWAY="${GATEWAY:-10.10.10.1}"
+GATEWAY="${GATEWAY:-192.168.56.1}"
 
 # =============================================================================
 # [1] WARNING
