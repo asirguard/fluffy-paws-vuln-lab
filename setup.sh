@@ -179,8 +179,11 @@ else
         | gpg --batch --yes -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor \
         || fail "Failed to import MongoDB GPG key. Check internet connectivity."
 
+    # MongoDB 7.0 repo is only available up to jammy (22.04).
+    # Use jammy packages on newer Ubuntu releases until MongoDB adds support.
+    MONGO_DISTRO="jammy"
     echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] \
-https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" \
+https://repo.mongodb.org/apt/ubuntu ${MONGO_DISTRO}/mongodb-org/7.0 multiverse" \
         > /etc/apt/sources.list.d/mongodb-org-7.0.list
 
     apt-get update -qq > /dev/null 2>&1 \
