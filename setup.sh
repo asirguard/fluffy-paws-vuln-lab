@@ -208,8 +208,7 @@ User=www-data
 ExecStart=/usr/bin/ferretdb \\
     --listen-addr=127.0.0.1:27017 \\
     --handler=sqlite \\
-    --sqlite-url=file:${FERRETDB_DATA}/ \\
-    --telemetry=disable
+    --sqlite-url=file:${FERRETDB_DATA}/
 Restart=on-failure
 RestartSec=5
 
