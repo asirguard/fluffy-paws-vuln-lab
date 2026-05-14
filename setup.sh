@@ -175,22 +175,21 @@ if command -v mongod &>/dev/null; then
     skip "MongoDB already installed ($(mongod --version | head -1))"
 else
     info "Adding MongoDB repository..."
-    curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc \
-        | gpg --batch --yes -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor \
+    # MongoDB 4.4 — last version that does not require AVX (works on VirtualBox without AVX passthrough)
+    curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc \
+        | gpg --batch --yes -o /usr/share/keyrings/mongodb-server-4.4.gpg --dearmor \
         || fail "Failed to import MongoDB GPG key. Check internet connectivity."
 
-    # MongoDB 7.0 repo is only available up to jammy (22.04).
-    # Use jammy packages on newer Ubuntu releases until MongoDB adds support.
-    MONGO_DISTRO="jammy"
-    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] \
-https://repo.mongodb.org/apt/ubuntu ${MONGO_DISTRO}/mongodb-org/7.0 multiverse" \
-        > /etc/apt/sources.list.d/mongodb-org-7.0.list
+    # Use focal repo — 4.4 packages are available for focal and work on newer Ubuntu
+    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-4.4.gpg ] \
+https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" \
+        > /etc/apt/sources.list.d/mongodb-org-4.4.list
 
     apt-get update -qq > /dev/null 2>&1 \
         || fail "apt-get update failed after adding MongoDB repo."
     apt-get install -y mongodb-org > /dev/null 2>&1 \
         || fail "Failed to install mongodb-org. Check repo or network."
-    ok "MongoDB installed"
+    ok "MongoDB 4.4 installed"
 fi
 
 info "Starting MongoDB..."
