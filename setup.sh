@@ -35,7 +35,12 @@ DEV_USER="dev"
 DEV_PASS="SuperSecret123"
 ALICE_PASS="meow123"
 JOHN_PASS="whiskers99"
-NODE_MAJOR=18
+NODE_MAJOR=20
+
+# ── Network (override via env: STATIC_IP, GATEWAY, NETMASK) ──────────────────
+STATIC_IP="${STATIC_IP:-10.10.10.20}"
+NETMASK="${NETMASK:-24}"
+GATEWAY="${GATEWAY:-10.10.10.1}"
 
 # =============================================================================
 # [1] WARNING
@@ -374,7 +379,38 @@ else
 fi
 
 # =============================================================================
-# [10] SUMMARY
+# [10] STATIC IP
+# =============================================================================
+step "Configuring Static IP"
+
+NETWORK_IFACE=$(ip link show | awk -F': ' '/^[0-9]+: e/{print $2; exit}')
+
+if [ -z "$NETWORK_IFACE" ]; then
+    warn "No ethernet interface found — skipping static IP configuration"
+    STATIC_IP_STATUS="skipped (no interface detected)"
+else
+    info "Detected interface: $NETWORK_IFACE"
+    cat > /etc/netplan/00-installer-config.yaml << EOF
+network:
+  version: 2
+  ethernets:
+    ${NETWORK_IFACE}:
+      addresses:
+        - ${STATIC_IP}/${NETMASK}
+      routes:
+        - to: default
+          via: ${GATEWAY}
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+      dhcp4: false
+EOF
+    chmod 600 /etc/netplan/00-installer-config.yaml
+    netplan apply 2>/dev/null && ok "Static IP applied: $STATIC_IP/$NETMASK on $NETWORK_IFACE" || warn "netplan apply returned non-zero — verify with: ip addr show $NETWORK_IFACE"
+    STATIC_IP_STATUS="$STATIC_IP/$NETMASK on $NETWORK_IFACE"
+fi
+
+# =============================================================================
+# [11] SUMMARY
 # =============================================================================
 echo ""
 echo -e "${GREEN}${BOLD}"
@@ -408,6 +444,9 @@ echo -e "  ├─ sudo systemctl status fluffy-paws-api"
 echo -e "  ├─ sudo systemctl restart fluffy-paws-api"
 echo -e "  └─ sudo journalctl -u fluffy-paws-api -f"
 echo ""
-echo -e "  ${RED}${BOLD}⚠️  Keep this machine off the internet.${RESET}"
+echo -e "  ${BOLD}Network${RESET}
+  └─ Static IP  →  ${STATIC_IP_STATUS:-not configured}
+
+  ${RED}${BOLD}⚠️  Keep this machine off the internet.${RESET}"
 echo -e "  ${RED}   This lab is intentionally exploitable.${RESET}"
 echo ""
