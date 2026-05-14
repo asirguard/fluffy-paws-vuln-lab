@@ -205,10 +205,10 @@ After=network.target
 [Service]
 Type=simple
 User=www-data
-ExecStart=/usr/bin/ferretdb \\
-    --listen-addr=127.0.0.1:27017 \\
-    --handler=sqlite \\
-    --sqlite-url=file:${FERRETDB_DATA}/
+Environment=FERRETDB_HANDLER=sqlite
+Environment=FERRETDB_SQLITE_DIR=${FERRETDB_DATA}/
+Environment=FERRETDB_LISTEN_ADDR=127.0.0.1:27017
+ExecStart=/usr/bin/ferretdb
 Restart=on-failure
 RestartSec=5
 
