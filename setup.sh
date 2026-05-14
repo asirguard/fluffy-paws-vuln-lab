@@ -167,40 +167,65 @@ else
 fi
 
 # =============================================================================
-# [5] MONGODB
+# [5] DATABASE (FerretDB + SQLite)
 # =============================================================================
-step "Installing MongoDB"
+step "Installing FerretDB (MongoDB-compatible, no AVX required)"
 
-if command -v mongod &>/dev/null; then
-    skip "MongoDB already installed ($(mongod --version | head -1))"
+# FerretDB v1.24 — last version with SQLite backend, no AVX, no PostgreSQL needed.
+# Pure Go binary, works on VirtualBox without CPU passthrough.
+# mongoose / MongoDB driver connects to it via standard mongodb:// URI on port 27017.
+FERRETDB_VERSION="1.24.0"
+FERRETDB_DATA="/var/lib/ferretdb"
+
+if command -v ferretdb &>/dev/null; then
+    skip "FerretDB already installed ($(ferretdb --version 2>&1 | head -1))"
 else
-    info "Adding MongoDB repository..."
-    # MongoDB 4.4 — last version that does not require AVX (works on VirtualBox without AVX passthrough)
-    curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc \
-        | gpg --batch --yes -o /usr/share/keyrings/mongodb-server-4.4.gpg --dearmor \
-        || fail "Failed to import MongoDB GPG key. Check internet connectivity."
+    info "Downloading FerretDB v${FERRETDB_VERSION}..."
+    curl -fsSL -o /tmp/ferretdb.deb \
+        "https://github.com/FerretDB/FerretDB/releases/download/v${FERRETDB_VERSION}/ferretdb-linux-amd64.deb" \
+        || fail "Failed to download FerretDB. Check internet connectivity."
 
-    # Use focal repo — 4.4 packages are available for focal and work on newer Ubuntu
-    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-4.4.gpg ] \
-https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" \
-        > /etc/apt/sources.list.d/mongodb-org-4.4.list
-
-    apt-get update -qq > /dev/null 2>&1 \
-        || fail "apt-get update failed after adding MongoDB repo."
-    apt-get install -y mongodb-org > /dev/null 2>&1 \
-        || fail "Failed to install mongodb-org. Check repo or network."
-    ok "MongoDB 4.4 installed"
+    dpkg -i /tmp/ferretdb.deb > /dev/null 2>&1 \
+        || fail "Failed to install FerretDB package."
+    rm -f /tmp/ferretdb.deb
+    ok "FerretDB v${FERRETDB_VERSION} installed"
 fi
 
-info "Starting MongoDB..."
-systemctl enable mongod --quiet
-systemctl start mongod
+# Data directory for SQLite
+mkdir -p "$FERRETDB_DATA"
+chown -R www-data:www-data "$FERRETDB_DATA"
+
+# systemd service for FerretDB
+info "Configuring FerretDB service..."
+cat > /etc/systemd/system/ferretdb.service << EOF
+[Unit]
+Description=FerretDB (MongoDB-compatible database)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+ExecStart=/usr/bin/ferretdb \\
+    --listen-addr=127.0.0.1:27017 \\
+    --handler=sqlite \\
+    --sqlite-url=file:${FERRETDB_DATA}/ \\
+    --telemetry=disable
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable ferretdb --quiet
+systemctl restart ferretdb
 sleep 2
 
-if systemctl is-active --quiet mongod; then
-    ok "MongoDB is running"
+if systemctl is-active --quiet ferretdb; then
+    ok "FerretDB is running on 127.0.0.1:27017"
 else
-    fail "MongoDB failed to start. Check: journalctl -u mongod"
+    fail "FerretDB failed to start. Check: systemctl status ferretdb"
 fi
 
 # =============================================================================
@@ -211,7 +236,7 @@ step "Deploying Web Lab"
 info "Copying web app to $WEB_ROOT..."
 rm -rf "$WEB_ROOT"
 mkdir -p "$WEB_ROOT"
-cp -r "$REPO_DIR/web/app/." "$WEB_ROOT/"
+cp -r "$REPO_DIR/web/." "$WEB_ROOT/"
 ok "Web files deployed to $WEB_ROOT"
 
 # Permissions
@@ -308,15 +333,15 @@ async function seed() {
 
 seed().catch(e => { console.error(e); process.exit(1); });
 SEED
-ok "Test users created in MongoDB"
+ok "Test users created (FerretDB/SQLite)"
 
 # systemd service
 info "Creating systemd service..."
 cat > /etc/systemd/system/fluffy-paws-api.service << EOF
 [Unit]
 Description=Fluffy Paws Vulnerable API
-After=network.target mongod.service
-Requires=mongod.service
+After=network.target ferretdb.service
+Requires=ferretdb.service
 
 [Service]
 Type=simple
