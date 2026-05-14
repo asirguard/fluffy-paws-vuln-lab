@@ -130,10 +130,11 @@ ok "Repository structure verified"
 
 # Internet connectivity
 info "Checking internet connectivity..."
-if ! apt-get update -qq 2>/dev/null; then
-    fail "Cannot reach package repositories. Check your network connection."
+if ! curl -fsSL --max-time 10 https://deb.nodesource.com > /dev/null 2>&1 && \
+   ! curl -fsSL --max-time 10 https://archive.ubuntu.com > /dev/null 2>&1; then
+    fail "No internet connectivity. Check your network connection."
 fi
-ok "Package repositories reachable"
+ok "Internet reachable"
 
 # =============================================================================
 # [3] SYSTEM DEPENDENCIES
