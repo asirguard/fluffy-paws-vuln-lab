@@ -174,16 +174,18 @@ if command -v mongod &>/dev/null; then
     skip "MongoDB already installed ($(mongod --version | head -1))"
 else
     info "Adding MongoDB repository..."
-    curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
-        gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor \
-        > /dev/null 2>&1
+    curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc \
+        | gpg --batch --yes -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor \
+        || fail "Failed to import MongoDB GPG key. Check internet connectivity."
 
     echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] \
 https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" \
         > /etc/apt/sources.list.d/mongodb-org-7.0.list
 
-    apt-get update -qq > /dev/null 2>&1
-    apt-get install -y -qq mongodb-org > /dev/null 2>&1
+    apt-get update -qq > /dev/null 2>&1 \
+        || fail "apt-get update failed after adding MongoDB repo."
+    apt-get install -y mongodb-org > /dev/null 2>&1 \
+        || fail "Failed to install mongodb-org. Check repo or network."
     ok "MongoDB installed"
 fi
 
