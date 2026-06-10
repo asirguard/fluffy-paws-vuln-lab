@@ -1,5 +1,6 @@
 <?php
 require_once 'auth.php';
+require_once 'config.php';
 
 // Auth guard — no token → redirect to login
 if (!$isLoggedIn) {
@@ -149,7 +150,7 @@ $payload  = $jwtPayload;
 
 <!-- FOOTER -->
 <footer class="footer">
-    <p>All rights reserved © ASIRGUARD</p>
+    <p>All rights reserved © ASIRGUARD &nbsp;|&nbsp; Lab v<?php echo $LAB_VERSION; ?></p>
 </footer>
 
 <script>

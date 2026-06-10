@@ -4,6 +4,7 @@ if (!empty($_COOKIE['fp_token'])) {
     header('Location: dashboard.php');
     exit;
 }
+require_once 'config.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -60,7 +61,7 @@ if (!empty($_COOKIE['fp_token'])) {
 
 <!-- FOOTER -->
 <footer class="footer">
-    <p>All rights reserved © ASIRGUARD</p>
+    <p>All rights reserved © ASIRGUARD &nbsp;|&nbsp; Lab v<?php echo $LAB_VERSION; ?></p>
 </footer>
 
 <script>
