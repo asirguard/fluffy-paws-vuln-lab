@@ -59,6 +59,11 @@ if (!empty($_COOKIE['fp_token'])) {
 </footer>
 
 <script>
+// API runs on the same host as this page, on port 3000.
+// location.hostname resolves to whatever address the page was opened with
+// (e.g. 192.168.56.20), so the form works from the host and from Kali.
+const API_BASE = 'http://' + location.hostname + ':3000';
+
 async function doLogin() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
@@ -79,7 +84,7 @@ async function doLogin() {
     try {
         // VULN #12 — NoSQL Injection: username is sent as-is, no sanitization
         // VULN #10 — No rate limiting on this endpoint
-        const res = await fetch('http://127.0.0.1:3000/api/auth/login', {
+        const res = await fetch(API_BASE + '/api/auth/login', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })

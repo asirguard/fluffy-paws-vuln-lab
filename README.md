@@ -1,4 +1,4 @@
-# Fluffy Paws — Vulnerable Lab v1.0
+# Fluffy Paws — Vulnerable Lab v1.0.1
 
 > WARNING: This project is intentionally vulnerable. For educational purposes only.
 > Never deploy to a public server. Practice only in a controlled local environment.
@@ -214,4 +214,4 @@ Practice only on systems you own or have authorization to test.
 
 ---
 
-*Version: 1.0 — Last updated: 2026-05-20*
+*Version: 1.0.1 — Last updated: 2026-06-04*
