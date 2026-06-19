@@ -4,6 +4,7 @@ if (!empty($_COOKIE['fp_token'])) {
     header('Location: dashboard.php');
     exit;
 }
+require_once 'config.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -60,10 +61,15 @@ if (!empty($_COOKIE['fp_token'])) {
 
 <!-- FOOTER -->
 <footer class="footer">
-    <p>All rights reserved © ASIRGUARD</p>
+    <p>All rights reserved © ASIRGUARD &nbsp;|&nbsp; Lab v<?php echo $LAB_VERSION; ?></p>
 </footer>
 
 <script>
+// API runs on the same host as this page, on port 3000.
+// location.hostname resolves to whatever address the page was opened with
+// (e.g. 192.168.56.20), so the form works from the host and from Kali.
+const API_BASE = 'http://' + location.hostname + ':3000';
+
 async function doRegister() {
     const username = document.getElementById('username').value.trim();
     const email    = document.getElementById('email').value.trim();
@@ -88,7 +94,7 @@ async function doRegister() {
         // Any extra field sent here (e.g. "role": "admin") will be saved to MongoDB.
         // This form only sends the 3 expected fields — but nothing stops an attacker
         // from modifying the request (Burp, curl) and injecting "role": "admin".
-        const res = await fetch('http://127.0.0.1:3000/api/auth/register', {
+        const res = await fetch(API_BASE + '/api/auth/register', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, email, password })

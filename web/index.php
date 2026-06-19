@@ -1,5 +1,6 @@
 <?php
 require_once 'auth.php';
+require_once 'config.php';
 
 // Upload mode only available to logged-in users with role 'user'
 $canUpload = $isLoggedIn && $currentRole === 'user';
@@ -141,7 +142,7 @@ if(isset($_POST['upload'])) {
 
 <!-- FOOTER -->
 <footer class="footer">
-    <p>All rights reserved © ASIRGUARD</p>
+    <p>All rights reserved © ASIRGUARD &nbsp;|&nbsp; Lab v<?php echo $LAB_VERSION; ?></p>
 </footer>
 
 </body>
