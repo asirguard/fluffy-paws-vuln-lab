@@ -1,10 +1,21 @@
-# Fluffy Paws — Vulnerable Lab v1.0.1
+# Fluffy Paws — Vulnerable Lab v1.1.0
 
 > WARNING: This project is intentionally vulnerable. For educational purposes only.
 > Never deploy to a public server. Practice only in a controlled local environment.
 
 A full-stack pentesting lab simulating a real-world cat photo sharing platform.
 Combines a vulnerable REST API (Node.js) and a vulnerable PHP web application running on the same Ubuntu Server target.
+
+---
+
+## Watch the Lesson / Follow
+
+This lab is the hands-on environment for the AsirGuard API pentesting series.
+
+- Video lesson on this lab (English): https://www.youtube.com/@ASIRGUARD-lab
+- Video lesson on this lab (Russian): https://www.youtube.com/@ASIRGUARD
+- Patreon (Russian): https://www.patreon.com/c/ASIRGUARD
+- Telegram (Russian): https://t.me/AsirGuard
 
 ---
 
@@ -127,7 +138,7 @@ The register endpoint creates a new user with `{ ...req.body }` — all fields f
 
 **Excessive Data Exposure (#9) — OWASP API3:2023**
 Location: api/src/controllers/auth.controller.js -> getUser()
-The getUser endpoint returns the full MongoDB document without using .select() to restrict fields. The response includes password_hash. Any authenticated user can retrieve password hashes for any account on the platform.
+The getUser endpoint returns the full MongoDB document without using .select() to restrict fields. The response includes password_hash and, as of v1.1.0, the plaintext password as well. Any authenticated user can retrieve credentials for any account on the platform.
 
 **BOLA / IDOR via path (#1) — OWASP API1:2023**
 Location: api/src/controllers/auth.controller.js -> getUser()
@@ -135,7 +146,10 @@ The getUser endpoint accepts a user ID in the path (`GET /api/users/:id`) and pe
 
 **NoSQL Injection (#12) — OWASP API8:2023**
 Location: api/src/controllers/auth.controller.js -> login()
-The login endpoint passes the username field directly to MongoDB findOne() without type checking. An attacker can send `"username": { "$ne": null }` to match any user in the database, bypassing credential validation entirely and logging in as the first user found (typically alice).
+The login endpoint passes both the username and the password straight into MongoDB findOne() with no type checking: `User.findOne({ username, password })`. A normal login sends two strings and matches a single user. An attacker sends MongoDB operators instead of strings and bypasses authentication entirely:
+- `{"username": {"$ne": null}, "password": {"$ne": null}}` matches the first user in the collection and logs in as that user (alice) with no valid credentials.
+- `{"username": "john", "password": {"$ne": null}}` logs in as the admin account john without knowing the password.
+A plaintext password is stored on each user (alongside password_hash) so the in-query comparison works for legitimate logins while remaining injectable.
 
 **JWT Attacks (#7) — OWASP API2:2023**
 Location: api/src/middleware/auth.middleware.js
@@ -214,4 +228,4 @@ Practice only on systems you own or have authorization to test.
 
 ---
 
-*Version: 1.0.1 — Last updated: 2026-06-04*
+*Version: 1.1.0 — Last updated: 2026-06-22*

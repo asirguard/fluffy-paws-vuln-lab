@@ -2,7 +2,7 @@
 
 # =============================================================================
 # Fluffy Paws — Vulnerable Lab Installer
-# Version: 1.0.1
+# Version: 1.1.0
 # =============================================================================
 # This script sets up a full pentesting lab environment on Ubuntu Server.
 # Installs: Apache + PHP (Web Lab), Node.js + FerretDB/SQLite (API Lab)
@@ -39,7 +39,7 @@ step() { echo -e "\n${BOLD}─────────────────�
          echo -e "${BOLD}──────────────────────────────────────────${RESET}"; }
 
 # ── Config ────────────────────────────────────────────────────────────────────
-LAB_VERSION="1.0.1"
+LAB_VERSION="1.1.0"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WEB_ROOT="/var/www/html/fluffy-paws"
 API_ROOT="/opt/fluffy-paws-api"
@@ -316,6 +316,7 @@ async function seed() {
             username: 'alice',
             email: 'alice@fluffypaws.com',
             password_hash: aliceHash,
+            password: 'meow123',
             role: 'user',
             created_at: new Date()
         },
@@ -323,6 +324,7 @@ async function seed() {
             username: 'john',
             email: 'john@fluffypaws.com',
             password_hash: johnHash,
+            password: 'whiskers99',
             role: 'admin',
             created_at: new Date()
         }

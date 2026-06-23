@@ -41,21 +41,20 @@ exports.register = async (req, res) => {
 // LOGIN
 // VULN #10 — No rate limiting at all (X-Forwarded-For bypass ready)
 // VULN #12 — NoSQL Injection
+// Both username and password are taken straight from req.body and
+// dropped into the query with no type checking. A normal login sends
+// strings and matches one user. An attacker sends operators such as
+// {"$ne": null} for both fields, matches the first user in the
+// collection and is logged in with no valid credentials.
 // ============================================================
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // VULN #12 — username goes directly into query, no type check
-    const user = await User.findOne({ username: username });
+    // VULN #12 — username and password go directly into the query, no type check
+    const user = await User.findOne({ username: username, password: password });
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const passwordValid = await bcrypt.compare(password, user.password_hash);
-
-    if (!passwordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
